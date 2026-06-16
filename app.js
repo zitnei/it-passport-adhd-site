@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const catName = { strategy:'ストラテジ', management:'マネジメント', technology:'テクノロジ' };
+const IPA_PAST_URL = 'https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/questions.html';
 let state = JSON.parse(localStorage.getItem('ipState') || '{"answered":0,"correct":0,"weak":[],"seen":[],"mastered":[]}');
 if (!Array.isArray(state.seen)) state.seen = [];
 if (!Array.isArray(state.mastered)) state.mastered = [];
@@ -14,17 +15,24 @@ function renderStats(){
   $('correctCount').textContent = state.correct;
   $('weakCount').textContent = state.weak.length;
 }
+function sourceLabel(q){ return q.source || '出典未設定：過去問を入れたら令和○年度○月/期を表示'; }
 function pool(weakOnly=false){
   const cat = $('categorySelect').value;
   let items = QUESTIONS.filter(q => cat === 'all' || q.cat === cat);
-  if (weakOnly) {
-    items = items.filter(q => state.weak.includes(q.id));
-  } else {
-    items = items.filter(q => !state.mastered.includes(q.id));
-  }
+  if (weakOnly) items = items.filter(q => state.weak.includes(q.id));
+  else items = items.filter(q => !state.mastered.includes(q.id));
   return items;
 }
 function clearNode(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+function addOfficialLink(parent){
+  const a = document.createElement('a');
+  a.href = IPA_PAST_URL;
+  a.target = '_blank';
+  a.rel = 'noreferrer';
+  a.className = 'official-link';
+  a.textContent = 'IPA公式 過去問題ページを開く';
+  parent.appendChild(a);
+}
 function showFinished(){
   current = null;
   $('tag').textContent = '完了';
@@ -34,7 +42,11 @@ function showFinished(){
   $('result').className = 'result ok';
   $('result').textContent = '〇 よくできました';
   $('explain').className = 'explain';
-  $('explain').textContent = '一度正解した問題は、もう通常練習には出ません。';
+  clearNode($('explain'));
+  const p = document.createElement('p');
+  p.textContent = '一度正解した問題は、もう通常練習には出ません。';
+  $('explain').appendChild(p);
+  addOfficialLink($('explain'));
 }
 function pick(weakOnly=false){
   currentWeakOnly = weakOnly;
@@ -46,7 +58,7 @@ function pick(weakOnly=false){
   state.seen.push(current.id);
   save();
   $('tag').textContent = catName[current.cat] || '分野';
-  $('qNo').textContent = (current.source || '出典未設定') + ' / Q' + current.id;
+  $('qNo').textContent = sourceLabel(current) + ' / Q' + current.id;
   $('question').textContent = current.q;
   $('result').className = 'result hidden';
   $('explain').className = 'explain hidden';
@@ -85,11 +97,12 @@ function answer(i){
   $('explain').className = 'explain';
   clearNode($('explain'));
   const lines = [
-    '出典：' + (current.source || '出典未設定'),
+    '出題年度・月/期：' + sourceLabel(current),
     '覚え方：' + current.ex,
     ok ? 'ADHD対策：正解したので、この問題はもう出ません。' : 'ADHD対策：この1文だけ読んだら「次の問題」。長く復習しない。'
   ];
   lines.forEach(t => { const p = document.createElement('p'); p.textContent = t; $('explain').appendChild(p); });
+  addOfficialLink($('explain'));
   if (ok) happyAnimation();
   save();
 }

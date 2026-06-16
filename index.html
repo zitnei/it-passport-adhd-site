@@ -3,38 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ITパスポート ADHDでも続く過去問トレーナー</title>
+  <title>ITパスポート 1画面トレーナー</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="hero">
-    <nav class="nav">
-      <div class="brand"><span class="logo">IP</span><span>IT Passport Trainer</span></div>
-      <button id="resetBtn" class="ghost">記録リセット</button>
-    </nav>
-    <section class="hero-grid">
-      <div>
-        <p class="eyebrow">白くて見やすい / 〇×判定 / ADHD対策つき</p>
-        <h1>ITパスポートを<br>1問ずつ確実に覚える</h1>
-        <p class="lead">答えを選ぶだけで、正解なら〇、不正解なら×。間違えた問題は自動で「苦手」に入ります。</p>
-        <div class="actions">
-          <button id="startBtn" class="primary">練習スタート</button>
-          <button id="weakBtn" class="secondary">苦手だけやる</button>
-        </div>
+  <main class="app-screen">
+    <section class="topbar card">
+      <div class="brand"><span class="logo">IP</span><span>ITパスポート</span></div>
+      <div class="top-stats">
+        <span>正答率 <b id="scoreRate">0%</b></span>
+        <span>解答 <b id="answeredCount">0</b></span>
+        <span>正解 <b id="correctCount">0</b></span>
+        <span>苦手 <b id="weakCount">0</b></span>
       </div>
-      <div class="score-card">
-        <div class="ring"><span id="scoreRate">0%</span></div>
-        <p>正答率</p>
-        <div class="mini-stats">
-          <span>解答 <b id="answeredCount">0</b></span>
-          <span>正解 <b id="correctCount">0</b></span>
-          <span>苦手 <b id="weakCount">0</b></span>
-        </div>
-      </div>
+      <button id="resetBtn" class="ghost">リセット</button>
     </section>
-  </header>
 
-  <main>
     <section class="controls card">
       <label>分野
         <select id="categorySelect">
@@ -47,49 +31,25 @@
       <label>モード
         <select id="modeSelect">
           <option value="normal">通常</option>
-          <option value="adhd">ADHD集中モード</option>
+          <option value="adhd">集中</option>
         </select>
       </label>
-      <button id="nextBtn" class="secondary">次の問題</button>
+      <button id="startBtn" class="primary">スタート</button>
+      <button id="weakBtn" class="secondary">苦手だけ</button>
+      <button id="nextBtn" class="secondary">スキップ</button>
     </section>
 
     <section class="quiz card" id="quizCard">
       <div class="quiz-top">
         <span id="tag" class="tag">分野</span>
-        <span id="qNo" class="qno">Q1</span>
+        <span id="qNo" class="qno">Q</span>
       </div>
-      <h2 id="question">スタートを押してください</h2>
+      <h1 id="question">スタートを押してください</h1>
       <div id="choices" class="choices"></div>
       <div id="result" class="result hidden"></div>
       <div id="explain" class="explain hidden"></div>
     </section>
-
-    <section class="adhd card">
-      <h2>ADHDでも続ける対策</h2>
-      <div class="steps">
-        <article><b>1</b><h3>1回5問だけ</h3><p>脳は「大きい課題」を避けやすいです。5問で終わりにすると開始ハードルが下がります。</p></article>
-        <article><b>2</b><h3>間違いだけ翌日</h3><p>全部やり直さず、×だけ復習。ワーキングメモリを節約できます。</p></article>
-        <article><b>3</b><h3>用語は絵で覚える</h3><p>例：SQL=データを探す命令、API=アプリ同士の受付窓口。</p></article>
-      </div>
-      <div class="routine">
-        <h3>今日のやり方</h3>
-        <ol>
-          <li>5問だけ解く</li>
-          <li>×の解説を1行読む</li>
-          <li>苦手だけもう1回</li>
-          <li>正答率60%以上なら終了</li>
-        </ol>
-      </div>
-    </section>
-
-    <section class="import card">
-      <h2>過去問を増やす</h2>
-      <p>このサイトは <code>questions.js</code> に問題を追加すれば、何問でも増やせます。IPA公式は令和8年度〜過去年度の問題冊子・解答例を公開しています。</p>
-      <a class="link" href="https://www3.jitec.ipa.go.jp/JitesCbt/html/openinfo/questions.html" target="_blank" rel="noreferrer">IPA公式 過去問題ページを開く</a>
-    </section>
   </main>
-
-  <footer>Made for IT Passport study. LocalStorageで学習記録を保存します。</footer>
   <script src="questions.js"></script>
   <script src="app.js"></script>
 </body>

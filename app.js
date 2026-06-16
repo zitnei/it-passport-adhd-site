@@ -1,7 +1,8 @@
 const $ = (id) => document.getElementById(id);
 const catName = { strategy:'ストラテジ', management:'マネジメント', technology:'テクノロジ' };
-let state = JSON.parse(localStorage.getItem('ipState') || '{"answered":0,"correct":0,"weak":[],"seen":[]}');
+let state = JSON.parse(localStorage.getItem('ipState') || '{"answered":0,"correct":0,"weak":[],"seen":[],"mastered":[]}');
 if (!Array.isArray(state.seen)) state.seen = [];
+if (!Array.isArray(state.mastered)) state.mastered = [];
 let current = null;
 let currentWeakOnly = false;
 
@@ -16,13 +17,29 @@ function renderStats(){
 function pool(weakOnly=false){
   const cat = $('categorySelect').value;
   let items = QUESTIONS.filter(q => cat === 'all' || q.cat === cat);
-  if (weakOnly) items = items.filter(q => state.weak.includes(q.id));
-  return items.length ? items : QUESTIONS;
+  if (weakOnly) {
+    items = items.filter(q => state.weak.includes(q.id));
+  } else {
+    items = items.filter(q => !state.mastered.includes(q.id));
+  }
+  return items;
 }
 function clearNode(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+function showFinished(){
+  current = null;
+  $('tag').textContent = '完了';
+  $('qNo').textContent = '正解済みは非表示';
+  $('question').textContent = 'この範囲の未正解問題は終わりました。分野を変えるか、記録リセットで最初からできます。';
+  clearNode($('choices'));
+  $('result').className = 'result ok';
+  $('result').textContent = '〇 よくできました';
+  $('explain').className = 'explain';
+  $('explain').textContent = '一度正解した問題は、もう通常練習には出ません。';
+}
 function pick(weakOnly=false){
   currentWeakOnly = weakOnly;
   const items = pool(weakOnly);
+  if (!items.length) { showFinished(); return; }
   let unseen = items.filter(q => !state.seen.includes(q.id));
   if (!unseen.length) { state.seen = []; unseen = items; }
   current = unseen[Math.floor(Math.random() * unseen.length)];
@@ -43,20 +60,22 @@ function pick(weakOnly=false){
     b.addEventListener('click', () => answer(i));
     $('choices').appendChild(b);
   });
-  if ($('modeSelect').value === 'adhd') $('question').scrollIntoView({ behavior:'smooth', block:'center' });
 }
 function answer(i){
   if (!current) return;
   const ok = i === current.answer;
   state.answered++;
-  if (ok) state.correct++;
+  if (ok) {
+    state.correct++;
+    if (!state.mastered.includes(current.id)) state.mastered.push(current.id);
+  }
   if (!ok && !state.weak.includes(current.id)) state.weak.push(current.id);
   if (ok) state.weak = state.weak.filter(id => id !== current.id);
   $('choices').querySelectorAll('button').forEach(b => b.disabled = true);
   $('result').className = 'result result-row ' + (ok ? 'ok' : 'ng');
   clearNode($('result'));
   const msg = document.createElement('span');
-  msg.textContent = ok ? '〇 正解！' : '× 不正解。正解は「' + ['ア','イ','ウ','エ'][current.answer] + '」';
+  msg.textContent = ok ? '〇 正解！この問題は卒業' : '× 不正解。正解は「' + ['ア','イ','ウ','エ'][current.answer] + '」';
   const next = document.createElement('button');
   next.className = 'next-inline';
   next.textContent = '次の問題';
@@ -68,7 +87,7 @@ function answer(i){
   const lines = [
     '出典：' + (current.source || '出典未設定'),
     '覚え方：' + current.ex,
-    'ADHD対策：この1文だけ読んだら「次の問題」。長く復習しない。'
+    ok ? 'ADHD対策：正解したので、この問題はもう出ません。' : 'ADHD対策：この1文だけ読んだら「次の問題」。長く復習しない。'
   ];
   lines.forEach(t => { const p = document.createElement('p'); p.textContent = t; $('explain').appendChild(p); });
   if (ok) happyAnimation();
@@ -93,5 +112,5 @@ $('startBtn').addEventListener('click', () => pick(false));
 $('nextBtn').addEventListener('click', () => pick(false));
 $('weakBtn').addEventListener('click', () => pick(true));
 $('categorySelect').addEventListener('change', () => { state.seen = []; save(); });
-$('resetBtn').addEventListener('click', () => { if(confirm('学習記録を消しますか？')){ state={answered:0,correct:0,weak:[],seen:[]}; save(); pick(false); } });
+$('resetBtn').addEventListener('click', () => { if(confirm('学習記録を消しますか？')){ state={answered:0,correct:0,weak:[],seen:[],mastered:[]}; save(); pick(false); } });
 renderStats();

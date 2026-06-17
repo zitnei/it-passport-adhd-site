@@ -15,7 +15,7 @@ function renderStats(){
   $('correctCount').textContent = state.correct;
   $('weakCount').textContent = state.weak.length;
 }
-function sourceLabel(q){ return q.source || '出典未設定：過去問を入れたら令和○年度○月/期を表示'; }
+function sourceLabel(q){ return q.source || '出典未設定'; }
 function pool(weakOnly=false){
   const cat = $('categorySelect').value;
   let items = QUESTIONS.filter(q => cat === 'all' || q.cat === cat);
@@ -33,11 +33,45 @@ function addOfficialLink(parent){
   a.textContent = 'IPA公式 過去問題ページを開く';
   parent.appendChild(a);
 }
+function renderQuestionBody(q){
+  clearNode($('question'));
+  const title = document.createElement('div');
+  title.className = 'question-text';
+  title.textContent = q.q;
+  $('question').appendChild(title);
+  if (q.tip) {
+    const tip = document.createElement('div');
+    tip.className = 'study-tip';
+    tip.textContent = q.tip;
+    $('question').appendChild(tip);
+  }
+  if (q.table) {
+    const table = document.createElement('table');
+    table.className = 'question-table';
+    const thead = document.createElement('thead');
+    const hr = document.createElement('tr');
+    q.table.headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; hr.appendChild(th); });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    q.table.rows.forEach(row => {
+      const tr = document.createElement('tr');
+      row.forEach(cell => { const td = document.createElement('td'); td.textContent = cell; tr.appendChild(td); });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    $('question').appendChild(table);
+  }
+}
 function showFinished(){
   current = null;
   $('tag').textContent = '完了';
   $('qNo').textContent = '正解済みは非表示';
-  $('question').textContent = 'この範囲の未正解問題は終わりました。分野を変えるか、記録リセットで最初からできます。';
+  clearNode($('question'));
+  const done = document.createElement('div');
+  done.className = 'question-text';
+  done.textContent = 'この範囲の未正解問題は終わりました。分野を変えるか、記録リセットで最初からできます。';
+  $('question').appendChild(done);
   clearNode($('choices'));
   $('result').className = 'result ok';
   $('result').textContent = '〇 よくできました';
@@ -59,7 +93,7 @@ function pick(weakOnly=false){
   save();
   $('tag').textContent = catName[current.cat] || '分野';
   $('qNo').textContent = sourceLabel(current) + ' / Q' + current.id;
-  $('question').textContent = current.q;
+  renderQuestionBody(current);
   $('result').className = 'result hidden';
   $('explain').className = 'explain hidden';
   clearNode($('result'));
@@ -83,7 +117,12 @@ function answer(i){
   }
   if (!ok && !state.weak.includes(current.id)) state.weak.push(current.id);
   if (ok) state.weak = state.weak.filter(id => id !== current.id);
-  $('choices').querySelectorAll('button').forEach(b => b.disabled = true);
+  $('choices').querySelectorAll('button').forEach((b, idx) => {
+    b.disabled = true;
+    b.classList.add('choice-muted');
+    if (idx === current.answer) b.classList.add('choice-correct');
+    if (idx === i && !ok) b.classList.add('choice-wrong');
+  });
   $('result').className = 'result result-row ' + (ok ? 'ok' : 'ng');
   clearNode($('result'));
   const msg = document.createElement('span');
@@ -96,12 +135,8 @@ function answer(i){
   $('result').appendChild(next);
   $('explain').className = 'explain';
   clearNode($('explain'));
-  const lines = [
-    '出題年度・月/期：' + sourceLabel(current),
-    '覚え方：' + current.ex,
-    ok ? 'ADHD対策：正解したので、この問題はもう出ません。' : 'ADHD対策：この1文だけ読んだら「次の問題」。長く復習しない。'
-  ];
-  lines.forEach(t => { const p = document.createElement('p'); p.textContent = t; $('explain').appendChild(p); });
+  const exLines = Array.isArray(current.ex) ? current.ex.slice(0, 3) : String(current.ex).split('。').filter(Boolean).slice(0, 3).map(s => s + '。');
+  exLines.forEach(t => { const p = document.createElement('p'); p.textContent = t; $('explain').appendChild(p); });
   addOfficialLink($('explain'));
   if (ok) happyAnimation();
   save();
